@@ -1,0 +1,69 @@
+{
+  "version": 1,
+  "author": "Air Quality IoT System",
+  "editor": "Pramajaya",
+  "parts": [
+    { "type": "wokwi-esp32-devkit-v1", "id": "esp", "top": 302.3, "left": 23.8, "attrs": {} },
+    {
+      "type": "wokwi-dht22",
+      "id": "dht1",
+      "top": -76.8,
+      "left": 200,
+      "attrs": { "temperature": "25", "humidity": "50" }
+    },
+    { "type": "wokwi-gas-sensor", "id": "gas1", "top": -86.4, "left": 350, "attrs": {} },
+    { "type": "wokwi-potentiometer", "id": "pot1", "top": 100, "left": 350, "attrs": {} },
+    {
+      "type": "wokwi-lcd1602",
+      "id": "lcd1",
+      "top": -150,
+      "left": -250,
+      "attrs": { "pins": "i2c" }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "led1",
+      "top": 140.4,
+      "left": -149.8,
+      "attrs": { "color": "green" }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "led2",
+      "top": 150,
+      "left": -34.6,
+      "attrs": { "color": "yellow" }
+    },
+    { "type": "wokwi-led", "id": "led3", "top": 140.4, "left": 61.4, "attrs": { "color": "red" } },
+    { "type": "wokwi-resistor", "id": "r1", "top": 250, "left": -90, "attrs": { "value": "220" } },
+    { "type": "wokwi-resistor", "id": "r2", "top": 250, "left": 10, "attrs": { "value": "220" } },
+    { "type": "wokwi-resistor", "id": "r3", "top": 250, "left": 110, "attrs": { "value": "220" } }
+  ],
+  "connections": [
+    [ "esp:TX0", "$serialMonitor:RX", "", [] ],
+    [ "esp:RX0", "$serialMonitor:TX", "", [] ],
+    [ "dht1:VCC", "esp:3V3", "red", [ "v0" ] ],
+    [ "dht1:GND", "esp:GND.1", "black", [ "v0" ] ],
+    [ "dht1:SDA", "esp:D15", "green", [ "v0" ] ],
+    [ "gas1:VCC", "esp:VIN", "red", [ "v0" ] ],
+    [ "gas1:GND", "esp:GND.1", "black", [ "v0" ] ],
+    [ "gas1:AO", "esp:D34", "orange", [ "v0" ] ],
+    [ "pot1:VCC", "esp:3V3", "red", [ "v0" ] ],
+    [ "pot1:GND", "esp:GND.2", "black", [ "v0" ] ],
+    [ "pot1:SIG", "esp:D35", "yellow", [ "v0" ] ],
+    [ "lcd1:VCC", "esp:VIN", "red", [ "v0" ] ],
+    [ "lcd1:GND", "esp:GND.1", "black", [ "v0" ] ],
+    [ "lcd1:SDA", "esp:D21", "blue", [ "v0" ] ],
+    [ "lcd1:SCL", "esp:D22", "cyan", [ "v0" ] ],
+    [ "led1:A", "r1:1", "green", [ "v0" ] ],
+    [ "r1:2", "esp:D25", "green", [ "v0" ] ],
+    [ "led1:C", "esp:GND.2", "black", [ "v0" ] ],
+    [ "led2:A", "r2:1", "yellow", [ "v0" ] ],
+    [ "r2:2", "esp:D26", "yellow", [ "v0" ] ],
+    [ "led2:C", "esp:GND.2", "black", [ "v0" ] ],
+    [ "led3:A", "r3:1", "red", [ "v0" ] ],
+    [ "r3:2", "esp:D27", "red", [ "v0" ] ],
+    [ "led3:C", "esp:GND.2", "black", [ "v0" ] ]
+  ],
+  "dependencies": {}
+}
