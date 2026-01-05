@@ -1,43 +1,158 @@
 {
   "version": 1,
-  "author": "Air Quality IoT System",
-  "editor": "Pramajaya",
+  "author": "Enhanced Air Quality IoT System",
+  "editor": "wokwi",
   "parts": [
-    { "type": "wokwi-esp32-devkit-v1", "id": "esp", "top": 302.3, "left": 23.8, "attrs": {} },
+    { "type": "wokwi-esp32-devkit-v1", "id": "esp", "top": 0, "left": 0, "attrs": {} },
     {
       "type": "wokwi-dht22",
       "id": "dht1",
-      "top": -76.8,
-      "left": 200,
+      "top": -249.3,
+      "left": 301.8,
       "attrs": { "temperature": "25", "humidity": "50" }
     },
-    { "type": "wokwi-gas-sensor", "id": "gas1", "top": -86.4, "left": 350, "attrs": {} },
-    { "type": "wokwi-potentiometer", "id": "pot1", "top": 100, "left": 350, "attrs": {} },
+    { "type": "wokwi-gas-sensor", "id": "gas1", "top": -246.9, "left": 439, "attrs": {} },
+    {
+      "type": "wokwi-potentiometer",
+      "id": "pot1",
+      "top": -58.9,
+      "left": 431.8,
+      "attrs": { "value": "20000" }
+    },
     {
       "type": "wokwi-lcd1602",
-      "id": "lcd1",
-      "top": -150,
-      "left": -250,
-      "attrs": { "pins": "i2c" }
+      "id": "lcdMain",
+      "top": -387.2,
+      "left": -196,
+      "attrs": { "pins": "i2c", "i2cAddress": "0x27" }
+    },
+    {
+      "type": "wokwi-lcd2004",
+      "id": "lcdReco",
+      "top": -387.2,
+      "left": -570.4,
+      "attrs": { "pins": "i2c", "i2cAddress": "0x3F" }
     },
     {
       "type": "wokwi-led",
-      "id": "led1",
-      "top": 140.4,
+      "id": "ledGreen",
+      "top": -224.4,
       "left": -149.8,
       "attrs": { "color": "green" }
     },
     {
       "type": "wokwi-led",
-      "id": "led2",
-      "top": 150,
-      "left": -34.6,
+      "id": "ledYellow",
+      "top": -224.4,
+      "left": -82.6,
       "attrs": { "color": "yellow" }
     },
-    { "type": "wokwi-led", "id": "led3", "top": 140.4, "left": 61.4, "attrs": { "color": "red" } },
-    { "type": "wokwi-resistor", "id": "r1", "top": 250, "left": -90, "attrs": { "value": "220" } },
-    { "type": "wokwi-resistor", "id": "r2", "top": 250, "left": 10, "attrs": { "value": "220" } },
-    { "type": "wokwi-resistor", "id": "r3", "top": 250, "left": 110, "attrs": { "value": "220" } }
+    {
+      "type": "wokwi-led",
+      "id": "ledRed",
+      "top": -224.4,
+      "left": -34.6,
+      "attrs": { "color": "red" }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "ledBar1",
+      "top": -176.4,
+      "left": -553,
+      "attrs": { "color": "green", "label": "L1" }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "ledBar2",
+      "top": -176.4,
+      "left": -514.6,
+      "attrs": { "color": "green", "label": "L2" }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "ledBar3",
+      "top": -176.4,
+      "left": -476.2,
+      "attrs": { "color": "yellow", "label": "L3" }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "ledBar4",
+      "top": -176.4,
+      "left": -437.8,
+      "attrs": { "color": "red", "label": "L4" }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "ledBar5",
+      "top": -176.4,
+      "left": -399.4,
+      "attrs": { "color": "red", "label": "L5" }
+    },
+    {
+      "type": "wokwi-buzzer",
+      "id": "buzzer1",
+      "top": -372,
+      "left": 145.8,
+      "attrs": { "volume": "0.1" }
+    },
+    { "type": "wokwi-relay-module", "id": "relay1", "top": -374.2, "left": 240, "attrs": {} },
+    {
+      "type": "wokwi-resistor",
+      "id": "r1",
+      "top": -5.65,
+      "left": -105.6,
+      "attrs": { "value": "220" }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r2",
+      "top": -34.45,
+      "left": 0,
+      "attrs": { "value": "220" }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r3",
+      "top": -72.85,
+      "left": 38.4,
+      "attrs": { "value": "220" }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r4",
+      "top": 378.35,
+      "left": -249.6,
+      "attrs": { "value": "220" }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r5",
+      "top": 339.95,
+      "left": -249.6,
+      "attrs": { "value": "220" }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r6",
+      "top": 311.15,
+      "left": -249.6,
+      "attrs": { "value": "220" }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r7",
+      "top": 272.75,
+      "left": -249.6,
+      "attrs": { "value": "220" }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r8",
+      "top": 243.95,
+      "left": -249.6,
+      "attrs": { "value": "220" }
+    }
   ],
   "connections": [
     [ "esp:TX0", "$serialMonitor:RX", "", [] ],
@@ -51,19 +166,43 @@
     [ "pot1:VCC", "esp:3V3", "red", [ "v0" ] ],
     [ "pot1:GND", "esp:GND.2", "black", [ "v0" ] ],
     [ "pot1:SIG", "esp:D35", "yellow", [ "v0" ] ],
-    [ "lcd1:VCC", "esp:VIN", "red", [ "v0" ] ],
-    [ "lcd1:GND", "esp:GND.1", "black", [ "v0" ] ],
-    [ "lcd1:SDA", "esp:D21", "blue", [ "v0" ] ],
-    [ "lcd1:SCL", "esp:D22", "cyan", [ "v0" ] ],
-    [ "led1:A", "r1:1", "green", [ "v0" ] ],
+    [ "lcdMain:VCC", "esp:VIN", "red", [ "v0" ] ],
+    [ "lcdMain:GND", "esp:GND.1", "black", [ "v0" ] ],
+    [ "lcdMain:SDA", "esp:D21", "blue", [ "v0" ] ],
+    [ "lcdMain:SCL", "esp:D22", "cyan", [ "v0" ] ],
+    [ "lcdReco:VCC", "esp:VIN", "red", [ "v0" ] ],
+    [ "lcdReco:GND", "esp:GND.1", "black", [ "v0" ] ],
+    [ "lcdReco:SDA", "esp:D21", "blue", [ "v0" ] ],
+    [ "lcdReco:SCL", "esp:D22", "cyan", [ "v0" ] ],
+    [ "ledGreen:A", "r1:1", "green", [ "v0" ] ],
     [ "r1:2", "esp:D25", "green", [ "v0" ] ],
-    [ "led1:C", "esp:GND.2", "black", [ "v0" ] ],
-    [ "led2:A", "r2:1", "yellow", [ "v0" ] ],
+    [ "ledGreen:C", "esp:GND.2", "black", [ "v0" ] ],
+    [ "ledYellow:A", "r2:1", "yellow", [ "v0" ] ],
     [ "r2:2", "esp:D26", "yellow", [ "v0" ] ],
-    [ "led2:C", "esp:GND.2", "black", [ "v0" ] ],
-    [ "led3:A", "r3:1", "red", [ "v0" ] ],
+    [ "ledYellow:C", "esp:GND.2", "black", [ "v0" ] ],
+    [ "ledRed:A", "r3:1", "red", [ "v0" ] ],
     [ "r3:2", "esp:D27", "red", [ "v0" ] ],
-    [ "led3:C", "esp:GND.2", "black", [ "v0" ] ]
+    [ "ledRed:C", "esp:GND.2", "black", [ "v0" ] ],
+    [ "ledBar1:A", "r4:1", "green", [ "v0" ] ],
+    [ "r4:2", "esp:D12", "green", [ "v0" ] ],
+    [ "ledBar1:C", "esp:GND.2", "black", [ "v0" ] ],
+    [ "ledBar2:A", "r5:1", "green", [ "v0" ] ],
+    [ "r5:2", "esp:D13", "green", [ "v0" ] ],
+    [ "ledBar2:C", "esp:GND.2", "black", [ "v0" ] ],
+    [ "ledBar3:A", "r6:1", "yellow", [ "v0" ] ],
+    [ "r6:2", "esp:D14", "yellow", [ "v0" ] ],
+    [ "ledBar3:C", "esp:GND.2", "black", [ "v0" ] ],
+    [ "ledBar4:A", "r7:1", "red", [ "v0" ] ],
+    [ "r7:2", "esp:D16", "red", [ "v0" ] ],
+    [ "ledBar4:C", "esp:GND.2", "black", [ "v0" ] ],
+    [ "ledBar5:A", "r8:1", "red", [ "v0" ] ],
+    [ "r8:2", "esp:D17", "red", [ "v0" ] ],
+    [ "ledBar5:C", "esp:GND.2", "black", [ "v0" ] ],
+    [ "buzzer1:1", "esp:D32", "purple", [ "v0" ] ],
+    [ "buzzer1:2", "esp:GND.2", "black", [ "v0" ] ],
+    [ "relay1:VCC", "esp:VIN", "red", [ "v0" ] ],
+    [ "relay1:GND", "esp:GND.2", "black", [ "v0" ] ],
+    [ "relay1:IN", "esp:D33", "blue", [ "v0" ] ]
   ],
   "dependencies": {}
 }
