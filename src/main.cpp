@@ -228,6 +228,13 @@ void setup() {
   Serial.println("[*] Initializing Analog Sensors...");
   pinMode(MQ2_PIN, INPUT);
   pinMode(PM25_PIN, INPUT);
+  
+  // Initialize MQ2 filter array to zero
+  for (int i = 0; i < mq2.FILTER_SIZE; i++) {
+    mq2.readings[i] = 0.0;
+  }
+  mq2.readIndex = 0;
+  
   Serial.println("[✓] Analog sensors initialized");
   
   // MQ-2 Warm-up period
@@ -268,8 +275,10 @@ void setup() {
   digitalWrite(LED_RED, LOW);
   Serial.println("[✓] MQ-2 Warm-up complete!");
   
-  // Calibrate MQ-2 sensor
-  calibrateMQ2();
+  // Skip calibration for Wokwi simulator - use direct voltage-to-PPM conversion
+  // calibrateMQ2(); // Disabled for Wokwi - not needed
+  Serial.println("[*] Skipping calibration (Wokwi simulator mode)");
+  mq2.isCalibrated = true; // Mark as calibrated to avoid errors
   
   // Test actuators
   testActuators();
@@ -463,44 +472,90 @@ void readSensors() {
   }
   
   // Read MQ-2 - Wokwi gas sensor conversion
-  // Calibration data points:
-  // Point 1: slider 0.8 ppm -> ADC 2089 -> voltage 1.648V -> should output 0.8 ppm
-  // Point 2: slider 400 ppm -> ADC 2067 -> voltage 1.763V -> should output 400 ppm
+  // Wokwi gas sensor: slider directly sets PPM value (0-100000)
+  // Calibration data points (from actual tests):
+  // Point 1: slider 0.2 ppm -> ADC 1840 -> voltage 1.559V
+  // Point 2: slider 0.8 ppm -> ADC 2089 -> voltage 1.648V  
+  // Point 3: slider 400 ppm -> ADC 2067 -> voltage 1.763V
   // 
-  // Analysis: Voltage difference is small (0.115V) but PPM difference is huge (399.2 ppm)
-  // This suggests a highly sensitive or non-linear relationship
+  // Observation: ADC values are NOT linear with PPM!
+  // For 0.8 ppm: ADC = 2089, for 400 ppm: ADC = 2067 (lower!)
+  // This suggests inverse relationship or complex non-linear
+  // 
+  // Let's use ADC-based mapping with calibration points
   
   int adcRaw = analogRead(MQ2_PIN);
   debugVoltage = (adcRaw / 4095.0) * 3.3;
   
+  // Based on calibration data, let's create a mapping
+  // For low PPM (0.2-0.8): ADC is high (1840-2089)
+  // For high PPM (400): ADC is lower (2067)
+  // This is counter-intuitive but that's how Wokwi simulates it
+  
+  // Try inverse relationship: PPM = k / ADC or PPM = k * (4095 - ADC)
+  // Or use piecewise linear interpolation
+  
+  // Simple approach: Use voltage with calibrated formula
+  // From data: voltage seems more consistent
+  // 0.2 ppm -> 1.559V, 0.8 ppm -> 1.648V, 400 ppm -> 1.763V
+  // Voltage increases with PPM, but relationship is not linear
+  
+  // Let's use power function: PPM = a * (voltage - b)^c
+  // Or simpler: Use piecewise linear
+  
   float voltage = debugVoltage;
+  float rawPPM = 0.0;
   
-  // Linear interpolation between two calibration points:
-  // PPM = PPM1 + (PPM2 - PPM1) * (voltage - V1) / (V2 - V1)
-  // PPM = 0.8 + (400 - 0.8) * (voltage - 1.648) / (1.763 - 1.648)
-  // PPM = 0.8 + 399.2 * (voltage - 1.648) / 0.115
-  // PPM = 0.8 + 3471.3 * (voltage - 1.648)
-  // PPM = 0.8 + 3471.3 * voltage - 5716.5
-  // PPM = 3471.3 * voltage - 5715.7
+  // Piecewise linear interpolation based on voltage ranges
+  if (voltage <= 1.559) {
+    // Very low range: 0 to 0.2 ppm
+    rawPPM = (voltage / 1.559) * 0.2;
+  } else if (voltage <= 1.648) {
+    // Low range: 0.2 to 0.8 ppm
+    rawPPM = 0.2 + ((voltage - 1.559) / (1.648 - 1.559)) * (0.8 - 0.2);
+  } else if (voltage <= 1.763) {
+    // Medium range: 0.8 to 400 ppm (large jump!)
+    rawPPM = 0.8 + ((voltage - 1.648) / (1.763 - 1.648)) * (400 - 0.8);
+  } else {
+    // High range: extrapolate beyond 400 ppm
+    // Assume linear continuation: PPM = 400 + (voltage - 1.763) * scale
+    // Scale factor: if max voltage 3.3V should give ~100000 ppm
+    float scale = (100000 - 400) / (3.3 - 1.763);
+    rawPPM = 400 + (voltage - 1.763) * scale;
+  }
   
-  // But this gives negative values for low voltage, so we need to handle that
-  float rawPPM = 3471.3 * voltage - 5715.7;
-  
-  // Clamp to reasonable range (0 to 100000)
+  // Clamp to reasonable range
   if (rawPPM < 0.0) rawPPM = 0.0;
   if (rawPPM > 100000.0) rawPPM = 100000.0;
   
   debugRs = 0;
   debugRatio = 0;
   
-  // Apply moving average filter for stability
+  // Apply moving average filter - BUT reset old values if they're too different
+  // This prevents accumulation of wrong values
+  static bool filterInitialized = false;
+  static float lastRawPPM = 0.0;
+  
+  // If PPM changes significantly, reset filter to prevent old values affecting
+  if (!filterInitialized || fabs(rawPPM - lastRawPPM) > 50.0) {
+    // Reset filter if large change detected
+    for (int i = 0; i < mq2.FILTER_SIZE; i++) {
+      mq2.readings[i] = rawPPM; // Fill with current value
+    }
+    filterInitialized = true;
+  }
+  
+  lastRawPPM = rawPPM;
+  
+  // Update filter
   mq2.readings[mq2.readIndex] = rawPPM;
   mq2.readIndex = (mq2.readIndex + 1) % mq2.FILTER_SIZE;
   
+  // Calculate average
   float sum = 0;
   int validCount = 0;
   for (int i = 0; i < mq2.FILTER_SIZE; i++) {
-    if (mq2.readings[i] >= 0) { // Allow 0 values
+    if (mq2.readings[i] >= 0) {
       sum += mq2.readings[i];
       validCount++;
     }
