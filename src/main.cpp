@@ -463,47 +463,30 @@ void readSensors() {
   }
   
   // Read MQ-2 - Wokwi gas sensor conversion
-  // Calibration data: slider 400 ppm -> ADC 2067 -> voltage 1.763V
-  // Wokwi gas sensor slider directly sets PPM value (0-100000)
-  // Sensor outputs voltage proportional to PPM
+  // Calibration data points:
+  // Point 1: slider 0.8 ppm -> ADC 2089 -> voltage 1.648V -> should output 0.8 ppm
+  // Point 2: slider 400 ppm -> ADC 2067 -> voltage 1.763V -> should output 400 ppm
+  // 
+  // Analysis: Voltage difference is small (0.115V) but PPM difference is huge (399.2 ppm)
+  // This suggests a highly sensitive or non-linear relationship
   
   int adcRaw = analogRead(MQ2_PIN);
   debugVoltage = (adcRaw / 4095.0) * 3.3;
   
-  // Calibrated formula based on test point:
-  // At 400 ppm slider: voltage = 1.763V
-  // Formula: PPM = (voltage / 1.763) * 400
-  // But we need to scale for full range (0-100000 ppm)
-  // If max voltage is 3.3V, then: PPM = (voltage / 3.3) * max_ppm
-  // From calibration: 400 = (1.763 / 3.3) * max_ppm
-  // max_ppm = 400 * 3.3 / 1.763 = 748.7 (doesn't match 100000)
-  
-  // Alternative: Use direct voltage-to-PPM mapping with calibration factor
-  // PPM = voltage * calibration_factor
-  // calibration_factor = 400 / 1.763 = 226.8
-  // But this gives: max PPM = 3.3 * 226.8 = 748 ppm (wrong!)
-  
-  // The issue: Wokwi might use non-linear scale or different max
-  // Let's use the calibrated formula for now and adjust scale:
-  // PPM = (voltage / 1.763) * 400 * scale_adjustment
-  // scale_adjustment = 100000 / (3.3/1.763 * 400) = 133.5
-  
   float voltage = debugVoltage;
-  float rawPPM = (voltage / 1.763) * 400.0 * 133.5; // Calibrated with scale adjustment
   
-  // Simpler alternative: Use linear mapping with calibration point
-  // PPM = voltage * (400 / 1.763) * (100000 / expected_max_ppm)
-  // If we assume max voltage 3.3V should give reasonable max PPM:
-  // Let's try: PPM = voltage * 226.8 * (100000 / 748) = voltage * 30,320
-  // This gives: 1.763V * 30,320 = 53,434 ppm (still not 400!)
+  // Linear interpolation between two calibration points:
+  // PPM = PPM1 + (PPM2 - PPM1) * (voltage - V1) / (V2 - V1)
+  // PPM = 0.8 + (400 - 0.8) * (voltage - 1.648) / (1.763 - 1.648)
+  // PPM = 0.8 + 399.2 * (voltage - 1.648) / 0.115
+  // PPM = 0.8 + 3471.3 * (voltage - 1.648)
+  // PPM = 0.8 + 3471.3 * voltage - 5716.5
+  // PPM = 3471.3 * voltage - 5715.7
   
-  // Better approach: Use the calibration point directly
-  // PPM = (voltage / calibration_voltage) * calibration_ppm
-  // For now, use simple linear: PPM = voltage * 226.8
-  // Then scale to match: if 1.763V should be 400 ppm, factor = 400/1.763 = 226.8
-  rawPPM = voltage * 226.8;
+  // But this gives negative values for low voltage, so we need to handle that
+  float rawPPM = 3471.3 * voltage - 5715.7;
   
-  // Ensure valid range
+  // Clamp to reasonable range (0 to 100000)
   if (rawPPM < 0.0) rawPPM = 0.0;
   if (rawPPM > 100000.0) rawPPM = 100000.0;
   
