@@ -894,3 +894,70 @@ void testActuators() {
   
   logAction("Actuators Tested");
 }
+
+// ============ CONNECT WIFI ============
+void connectWiFi() {
+  Serial.println("\n[*] Connecting to WiFi...");
+  Serial.print("  SSID: ");
+  Serial.println(ssid);
+  
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(ssid, password);
+  
+  int attempts = 0;
+  while (WiFi.status() != WL_CONNECTED && attempts < 20) {
+    delay(500);
+    Serial.print(".");
+    attempts++;
+  }
+  
+  if (WiFi.status() == WL_CONNECTED) {
+    Serial.println();
+    Serial.println("[✓] WiFi connected!");
+    Serial.print("  IP Address: ");
+    Serial.println(WiFi.localIP());
+    logAction("WiFi Connected");
+  } else {
+    Serial.println();
+    Serial.println("[!] WiFi connection failed");
+    Serial.println("[!] Continuing without WiFi...");
+    logAction("WiFi Failed");
+  }
+}
+
+// ============ LOOP ============
+void loop() {
+  // Read all sensors
+  readSensors();
+  
+  // Evaluate air quality
+  evaluateAirQuality();
+  
+  // Generate recommendations
+  generateRecommendation();
+  
+  // Update displays
+  displayOnMainLCD();
+  displayRecommendations();
+  displayOnSerial();
+  
+  // Control actuators
+  updateStatusLEDs();
+  updateLEDBar();
+  controlBuzzer();
+  controlFan();
+  
+  // Upload to ThingSpeak every uploadInterval
+  if (millis() - lastUploadTime >= uploadInterval) {
+    uploadToThingSpeak();
+    lastUploadTime = millis();
+  }
+  
+  // Print action log every 60 seconds
+  if (millis() - lastActionLog >= 60000) {
+    printActionLog();
+    lastActionLog = millis();
+  }
+  
+  delay(1000); // Update every 1 second
+}
