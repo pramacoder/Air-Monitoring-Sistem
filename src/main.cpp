@@ -141,6 +141,7 @@ void calibrateMQ2();
 float readMQ2Voltage();
 float calculateRs(float voltage);
 float calculatePPM(float RsValue);
+float readMQ2PPM_Wokwi();
 void readSensors();
 void evaluateAirQuality();
 void updateStatusLEDs();
@@ -309,7 +310,7 @@ void calibrateMQ2() {
     float RsValue = calculateRs(voltage);
     
     // Only count valid readings (Rs > 1kΩ)
-    if (Rs > 1.0 && RsValue < 200.0) {
+    if (RsValue > 1.0 && RsValue < 200.0) {
       sumRs += RsValue;
       validSamples++;
     }
@@ -432,6 +433,24 @@ float calculatePPM(float RsValue) {
   return ppm;
 }
 
+// ============ READ MQ-2 PPM DIRECTLY (WOKWI SIMULATOR) ============
+// Wokwi gas sensor outputs PPM directly through slider (0-100000 ppm)
+// This function reads ADC and maps directly to PPM range
+float readMQ2PPM_Wokwi() {
+  int adcValue = analogRead(MQ2_PIN);
+  
+  // ESP32 ADC: 12-bit (0-4095)
+  // Wokwi gas sensor slider range: 0-100000 ppm
+  // Direct linear mapping
+  float ppm = (adcValue / 4095.0) * 100000.0;
+  
+  // Ensure valid range
+  if (ppm < 0.0) ppm = 0.0;
+  if (ppm > 100000.0) ppm = 100000.0;
+  
+  return ppm;
+}
+
 // ============ READ SENSORS (FIXED) ============
 void readSensors() {
   // Read DHT22
@@ -443,20 +462,28 @@ void readSensors() {
     humidity = 50.0;
   }
   
-  // Read MQ-2 with proper conversion
-  debugVoltage = readMQ2Voltage();
-  debugRs = calculateRs(debugVoltage);
-  debugRatio = debugRs / mq2.Ro;
-  float rawPPM = calculatePPM(debugRs);
+  // Read MQ-2 - Use direct PPM reading for Wokwi simulator
+  // Wokwi gas sensor slider directly controls PPM output (0-100000 ppm)
+  int adcRaw = analogRead(MQ2_PIN);
+  float rawPPM = (adcRaw / 4095.0) * 100000.0; // Direct mapping from ADC to PPM
   
-  // Apply moving average filter
+  // Ensure valid range
+  if (rawPPM < 0.0) rawPPM = 0.0;
+  if (rawPPM > 100000.0) rawPPM = 100000.0;
+  
+  // Debug values for troubleshooting
+  debugVoltage = (adcRaw / 4095.0) * 3.3;
+  debugRs = 0; // Not used for Wokwi direct reading
+  debugRatio = 0; // Not used for Wokwi direct reading
+  
+  // Apply moving average filter for stability
   mq2.readings[mq2.readIndex] = rawPPM;
   mq2.readIndex = (mq2.readIndex + 1) % mq2.FILTER_SIZE;
   
   float sum = 0;
   int validCount = 0;
   for (int i = 0; i < mq2.FILTER_SIZE; i++) {
-    if (mq2.readings[i] > 0) {
+    if (mq2.readings[i] >= 0) { // Allow 0 values
       sum += mq2.readings[i];
       validCount++;
     }
@@ -467,6 +494,16 @@ void readSensors() {
   } else {
     gasValue = rawPPM;
   }
+  
+  // Debug output
+  Serial.print("[DEBUG] ADC: ");
+  Serial.print(adcRaw);
+  Serial.print(" | Voltage: ");
+  Serial.print(debugVoltage, 3);
+  Serial.print("V | Raw PPM: ");
+  Serial.print(rawPPM, 2);
+  Serial.print(" | Filtered PPM: ");
+  Serial.println(gasValue, 2);
   
   // Read PM2.5 sensor (potentiometer simulation)
   int pm25Raw = analogRead(PM25_PIN);
@@ -741,10 +778,18 @@ void displayOnSerial() {
   Serial.println("%");
   
   Serial.print("Gas: ");
-  Serial.print(gasValue);
+  Serial.print(gasValue, 2);
   Serial.print(" PPM | PM2.5: ");
   Serial.print(pm25Value, 1);
   Serial.println(" µg/m³");
+  
+  // Debug info for MQ2 sensor
+  Serial.print("[DEBUG] ADC Raw: ");
+  Serial.print(analogRead(MQ2_PIN));
+  Serial.print(" | Voltage: ");
+  Serial.print(debugVoltage, 3);
+  Serial.print("V");
+  Serial.println();
   
   Serial.println(String('-', 60));
   Serial.println("RECOMMENDATION:");
