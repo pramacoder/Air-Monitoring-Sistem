@@ -1,7 +1,6 @@
 /*
  * ========================================
  * Sistem Pemantauan Kualitas Udara IoT
- * FIXED VERSION - Accurate MQ-2 Reading
  * ========================================
  * 
  * FIXES:
